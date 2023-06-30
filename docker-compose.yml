@@ -1,21 +1,51 @@
-version: '3'
+  version: '3.8'
 
-services:
-###> doctrine/doctrine-bundle ###
-  database:
-    image: postgres:${POSTGRES_VERSION:-15}-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      # You should definitely change the password in production
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
-      POSTGRES_USER: ${POSTGRES_USER:-app}
-    volumes:
-      - database_data:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
-###< doctrine/doctrine-bundle ###
+  services: 
+    app:
+      image: stcg/alpine317:latest
+      build:
+        context: .
+        # dockerfile: docker.io/stck/alpine-symfony-v2
 
-volumes:
-###> doctrine/doctrine-bundle ###
-  database_data:
-###< doctrine/doctrine-bundle ###
+      # Overrides default command so things don't shut down after the process ends.
+      command: sleep infinity
+
+      # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
+      network_mode: service:db
+
+      # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
+      # (Adding the "ports" property to this file will not forward from a Codespace.)
+      volumes:
+        - myapp:/app
+      # ports:
+      #   - 8000:8000
+    db:
+      image: mariadb:10.4
+      restart: always
+      volumes:
+        - mariadb-data:/var/lib/mysql
+      environment:
+        # MYSQL_ROOT_PASSWORD: notSecureChangeMe
+        MYSQL_ROOT_PASSWORD: Admin10Root@
+        MYSQL_DATABASE: app
+        MYSQL_USER: Admin
+        MYSQL_PASSWORD: 20CarottessurUnMur
+      ports:
+        - 8060:8060
+
+    phpmyadmin:
+        image: phpmyadmin:latest 
+        ports:
+          - 8080:80
+        environment:
+          - PMA_ARBITRARY=1
+
+
+      # Add "forwardPorts": ["3306"] to **devcontainer.json** to forward MariaDB locally.
+      # (Adding the "ports" property to this file will not forward from a Codespace.)
+    
+  volumes:
+    mariadb-data:
+    myapp:
+
+
